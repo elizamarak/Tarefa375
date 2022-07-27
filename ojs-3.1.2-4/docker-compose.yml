@@ -1,0 +1,55 @@
+version: "2.0"
+
+networks:
+  developer:
+    external: false
+
+volumes:
+  db-data:
+
+services:
+  db:
+    image: mysql:5.7.38-debian
+    env_file:
+      - .env
+    container_name: "db-${COMPOSE_PROJECT_NAME}"
+    restart: "${RESTART_POLICY}"
+    ports:
+      - "${MYSQL_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+ #     - "db-data:/var/lib/mysql"
+    networks:
+      developer:
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: "smtp-${COMPOSE_PROJECT_NAME}"
+    restart: "${RESTART_POLICY}"
+    ports:
+      - "${SMTP_MAILHOG_PORT}:1025"
+      - "${SMTP_MAILHOG_HTTP_PORT}:8025"
+    networks:
+      developer:
+  
+  ojs:
+    #image: luislepidus/ojs:2_4_8-5
+    build: .
+    env_file:
+      - .env
+    container_name: "app-${COMPOSE_PROJECT_NAME}"
+    restart: "${RESTART_POLICY}"
+    ports:
+      - "${HTTP_PORT}:8000"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+#      - "../files_L/config.inc.php:/var/www/ojs/config.inc.php"
+    depends_on:
+      - db
+    networks:
+      developer:
